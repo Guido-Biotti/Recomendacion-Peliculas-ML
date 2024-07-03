@@ -4,10 +4,12 @@ from fastapi import FastAPI
 from ast import literal_eval 
 
 #Una vez importadas las librerias a usar cargo el archivo .csv
+'''
 ruta_movies_sample = 'Movies/movies_sample.csv'
 movies = pd.read_csv(ruta_movies_sample)
-
-
+'''
+ruta_movies_full = 'Movies/movies_full.csv'
+movies = pd.read_csv(ruta_movies_full)
 
 
 #tamano_muestra = 8000
@@ -72,7 +74,7 @@ def votos_titulo(titulo):
 def get_actor(actor):
     actor = actor.lower()
     
-    # Filtrar películas donde el actor está en el elenco pero no es director
+    # Filtro las películas donde el actor esta en el elenco pero no es director
     peliculas_con_actor_sin_dirigir = movies[
         movies['cast'].apply(fa.get_cast_list).apply(lambda x: actor in x) &
         ~movies['crew'].apply(fa.get_director_list).apply(lambda x: actor in x)
@@ -82,7 +84,11 @@ def get_actor(actor):
     sum_return = peliculas_con_actor_sin_dirigir['return'].sum().round(2)
     
     avg_return = (sum_return / sum_films).round(2) if sum_films > 0 else 0
-    
+
+    genero = literal_eval(peliculas_con_actor_sin_dirigir['cast'].iloc[0])[0]['gender']
+
+    if genero == 1:
+        return f'La actriz "{actor.title()}" ha participado en "{sum_films}" peliculas donde no fue directora, con un retorno total de "{sum_return}" y un promedio de "{avg_return}" por pelicula.'
     return f'El actor "{actor.title()}" ha participado en "{sum_films}" peliculas donde no fue director, con un retorno total de "{sum_return}" y un promedio de "{avg_return}" por pelicula.'
 
 @app.get('/get_director/')
@@ -95,7 +101,13 @@ def get_director(director):
     costo = peliculas_dirigidas['budget'].round(0).tolist()
     ganancia = peliculas_dirigidas['revenue'].round(0).tolist()
     sum_return = peliculas_dirigidas['return'].sum().round(2)
-    resultado = (f'El director "{director.title()}" ha tenido un exito de "{sum_return}".\n')
+
+    genero = literal_eval(peliculas_dirigidas['crew'].iloc[0])[0]['gender']
+
+    if genero ==1:
+        resultado = (f'La directora "{director.title()}" ha tenido un exito de "{sum_return}".\n')
+    else:
+        resultado = (f'El director "{director.title()}" ha tenido un exito de "{sum_return}".\n')
     for i, pelicula in enumerate(peliculas_dirigidas['title']):
         resultado += (f'Dirigio la pelicula "{pelicula}" lanzada en "{lanzamientos[i]}" con un costo de "{costo[i]}", una ganancia de "{ganancia[i]}" y por lo tanto un retorno de "{retorno[i]}"\n')
     return resultado
