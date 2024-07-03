@@ -4,8 +4,8 @@ from fastapi import FastAPI
 from ast import literal_eval 
 
 #Una vez importadas las librerias a usar cargo el archivo .csv
-ruta_movies_full = 'Movies/movies_full.csv'
-movies_full = pd.read_csv(ruta_movies_full)
+ruta_movies_sample = 'Movies/movies_sample.csv'
+movies = pd.read_csv(ruta_movies_sample)
 
 
 
