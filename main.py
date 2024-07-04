@@ -5,12 +5,8 @@ from ast import literal_eval
 
 #Una vez importadas las librerias a usar cargo el archivo .csv
 
-ruta_movies_sample = 'Movies/movies_sample.csv'
+ruta_movies_sample = 'data/movies_sample.csv'
 movies = pd.read_csv(ruta_movies_sample)
-'''
-ruta_movies_full = 'Movies/movies_full.csv'
-movies = pd.read_csv(ruta_movies_full)
-'''
 
 #tamano_muestra = 8000
 #movies = movies_full.sample(n=tamano_muestra, random_state=42)
