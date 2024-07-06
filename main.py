@@ -2,6 +2,9 @@ import pandas as pd
 import Funciones_aux as fa
 from fastapi import FastAPI
 from ast import literal_eval 
+from sklearn.neighbors import NearestNeighbors
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import linear_kernel
 
 #Una vez importadas las librerias a usar cargo el archivo .csv
 
@@ -15,7 +18,19 @@ meses = {'enero':1,'febrero':2,'marzo':3,'abril':4,'mayo':5,'junio':6,'julio':7,
 dias = {'lunes':0,'martes':1,'miércoles':2,'jueves':3,'viernes':4,'sábado':5,'domingo':6}
 
 
-@app.get('/cantidad_filmaciones_mes/{mes}')
+movies['combined_features'] = movies['genres'] + ' ' + movies['overview'] + ' ' + movies['cast'] + ' ' + movies['crew']
+tfidf = TfidfVectorizer(stop_words='english')
+tfidf_matrix = tfidf.fit_transform(movies['combined_features'].fillna(''))
+
+# Calcular la similitud del coseno
+cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
+
+# Crear un modelo de vecinos más cercanos
+model_knn = NearestNeighbors(metric='cosine', algorithm='brute')
+model_knn.fit(tfidf_matrix)
+
+
+@app.get('/cantidad_filmaciones_mes/')
 def cantidad_filmaciones_mes(mes):
     #Paso el nombre del mes a minuscula
     mes = mes.lower()
@@ -30,7 +45,7 @@ def cantidad_filmaciones_mes(mes):
     
     return f"{cantidad_films} peliculas fueron estrenadas en el mes de {mes.title()}"
 
-@app.get('/cantidad_filmaciones_dia/{dia}')
+@app.get('/cantidad_filmaciones_dia/')
 def cantidad_filmaciones_dia(dia):
     dia = dia.lower() #Tomo el input en minuscula
     if dia in dias:
@@ -42,7 +57,7 @@ def cantidad_filmaciones_dia(dia):
     
     return f"{cantidad_films} peliculas fueron estrenadas en el dia {dia.title()}."
 
-@app.get('/score_titulo/{titulo}')
+@app.get('/score_titulo/')
 def score_titulo(titulo):
     titulo = titulo.lower() #Tomo el input en minuscula
     if movies['title'].str.lower().str.contains(titulo).any() or movies['original_title'].str.lower().str.contains(titulo).any(): #Si alguna columna de titulos contiene
@@ -53,7 +68,7 @@ def score_titulo(titulo):
     else:
         return f'La pelicula "{titulo.title()}" no se encuentra en el dataset.' #Si ninguna cumple retorno invalido
     
-@app.get('/votos_titulo/{titulo}')
+@app.get('/votos_titulo/')
 def votos_titulo(titulo):
     titulo = titulo.lower() #Tomo el input en minuscula
     if movies['title'].str.lower().str.contains(titulo).any() or movies['original_title'].str.lower().str.contains(titulo).any(): #Si alguna columna de titulos contiene
@@ -68,7 +83,7 @@ def votos_titulo(titulo):
     else:
         return f'La pelicula "{titulo.title()}" no se encuentra en el dataset.' #Si ninguna cumple retorno invalido
     
-@app.get('/get_actor/{actor}')
+@app.get('/get_actor/')
 def get_actor(actor):
     actor = actor.lower()
     
@@ -89,7 +104,7 @@ def get_actor(actor):
         return f'La actriz "{actor.title()}" ha participado en "{sum_films}" peliculas donde no fue directora, con un retorno total de "{sum_return}" y un promedio de "{avg_return}" por pelicula.'
     return f'El actor "{actor.title()}" ha participado en "{sum_films}" peliculas donde no fue director, con un retorno total de "{sum_return}" y un promedio de "{avg_return}" por pelicula.'
 
-@app.get('/get_director/{director}')
+@app.get('/get_director/')
 def get_director(director):
     director = director.lower()
     sum_return =0
@@ -110,6 +125,9 @@ def get_director(director):
         resultado += (f'Dirigio la pelicula "{pelicula}" lanzada en "{lanzamientos[i]}" con un costo de "{costo[i]}", una ganancia de "{ganancia[i]}" y por lo tanto un retorno de "{retorno[i]}"\n')
     return resultado
 
-'''@app.get('/recomendacion/')
+@app.get('/recomendacion/')
 def recomendacion(titulo):
-'''
+    idx = movies[movies['title'] == titulo].index[0]
+    distances, indices = model_knn.kneighbors(cosine_sim[idx], n_neighbors= 6)
+    recommended_movies = [movies.loc[movies.index[ind], 'title'] for ind in indices.flatten() if ind != idx]
+    return recommended_movies
