@@ -129,5 +129,7 @@ def get_director(director):
 def recomendacion(titulo):
     idx = movies[movies['title'] == titulo].index[0]
     distances, indices = model_knn.kneighbors(cosine_sim[idx], n_neighbors= 6)
-    recommended_movies = [movies.loc[movies.index[ind], 'title'] for ind in indices.flatten() if ind != idx]
+    for ind in indices.flatten():
+        if ind != idx:
+            recommended_movies = movies.loc[movies.index[ind], 'title'] 
     return recommended_movies
