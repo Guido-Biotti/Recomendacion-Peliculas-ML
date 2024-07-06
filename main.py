@@ -125,7 +125,7 @@ def get_director(director):
         resultado += (f'Dirigio la pelicula "{pelicula}" lanzada en "{lanzamientos[i]}" con un costo de "{costo[i]}", una ganancia de "{ganancia[i]}" y por lo tanto un retorno de "{retorno[i]}"\n')
     return resultado
 
-@app.get('/recomendacion/')
+@app.post('/recomendacion')
 def recomendacion(titulo):
     idx = movies[movies['title'] == titulo].index[0]
     distances, indices = model_knn.kneighbors(cosine_sim[idx], n_neighbors= 6)
