@@ -5,6 +5,7 @@ from ast import literal_eval
 from sklearn.neighbors import NearestNeighbors
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
+from sklearn.metrics.pairwise import cosine_similarity
 
 #Una vez importadas las librerias a usar cargo el archivo .csv
 
@@ -16,19 +17,6 @@ app = FastAPI()
 #Creo un diccionario de meses y dias para usar en las funciones
 meses = {'enero':1,'febrero':2,'marzo':3,'abril':4,'mayo':5,'junio':6,'julio':7,'agosto':8,'septiembre':9,'setiembre':9,'octubre':10,'noviembre':11,'diciembre':12}
 dias = {'lunes':0,'martes':1,'miércoles':2,'jueves':3,'viernes':4,'sábado':5,'domingo':6}
-
-
-movies['combined_features'] = movies['genres'] + ' ' + movies['overview'] + ' ' + movies['cast'] + ' ' + movies['crew']
-tfidf = TfidfVectorizer(stop_words='english')
-tfidf_matrix = tfidf.fit_transform(movies['combined_features'].fillna(''))
-
-# Calcular la similitud del coseno
-cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
-
-# Crear un modelo de vecinos más cercanos
-model_knn = NearestNeighbors(metric='cosine', algorithm='brute')
-model_knn.fit(tfidf_matrix)
-
 
 @app.get('/cantidad_filmaciones_mes/')
 def cantidad_filmaciones_mes(mes):
@@ -125,11 +113,27 @@ def get_director(director):
         resultado += (f'Dirigio la pelicula "{pelicula}" lanzada en "{lanzamientos[i]}" con un costo de "{costo[i]}", una ganancia de "{ganancia[i]}" y por lo tanto un retorno de "{retorno[i]}"\n')
     return resultado
 
-@app.post('/recomendacion')
+#Tomo un df menor para hacer la funcion mas eficiente
+recomendaciones = movies[['title', 'genres']].copy()
+
+#Creo la matriz TF-IDF con los valores de los generos 
+tfidf_vectorizer = TfidfVectorizer()
+genres_matrix = tfidf_vectorizer.fit_transform(recomendaciones['genres'])
+
+@app.post('/recomendacion/')
 def recomendacion(titulo):
-    idx = movies[movies['title'] == titulo].index[0]
-    distances, indices = model_knn.kneighbors(cosine_sim[idx], n_neighbors= 6)
-    for ind in indices.flatten():
-        if ind != idx:
-            recommended_movies = movies.loc[movies.index[ind], 'title'] 
-    return recommended_movies
+    #Tomo el vector de caracteristicas del titulo dado
+    titulo = titulo.lower()
+    movie_vector = tfidf_vectorizer.transform([titulo])
+
+    #Calcular la similitud con el resto de peliculas
+    similarity_matrix = cosine_similarity(movie_vector, genres_matrix)
+
+    #Agrego similitud al df
+    recomendaciones['similarity'] = similarity_matrix.flatten()
+    #Y ordeno segun esta
+    recomendaciones.sort_values(by='similarity', ascending=False)
+
+    # Recomendar las 5 películas más similares
+    recommended_movies = recomendaciones['title'].tolist()[1:6] #Del 1 al 6 ya que el 0 es la pelicula dada
+    return f'Si te gusto {titulo.title()} creemos que te podria gustar alguna de las siguientes: {", ".join(f"'{movie}'" for movie in recommended_movies)}'
