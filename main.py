@@ -136,4 +136,8 @@ def recomendacion(titulo):
 
     # Recomendar las 5 películas más similares
     recommended_movies = recomendaciones['title'].tolist()[1:6] #Del 1 al 6 ya que el 0 es la pelicula dada
-    return f"Si te gustó {titulo.title()}, creemos que te podría gustar alguna de las siguientes: {', '.join(f'\"{movie}\"' for movie in recommended_movies)}"
+    retorno = f"Si te gusto {titulo.title()}, creemos que te podria gustar alguna de las siguientes: "
+    for movie in recommended_movies:
+        retorno += f'"{movie}", '
+    return retorno
+
