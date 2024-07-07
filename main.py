@@ -2,9 +2,7 @@ import pandas as pd
 import Funciones_aux as fa
 from fastapi import FastAPI
 from ast import literal_eval 
-from sklearn.neighbors import NearestNeighbors
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import linear_kernel
 from sklearn.metrics.pairwise import cosine_similarity
 
 #Una vez importadas las librerias a usar cargo el archivo .csv
@@ -124,6 +122,8 @@ genres_matrix = tfidf_vectorizer.fit_transform(recomendaciones['genres'])
 def recomendacion(titulo):
     #Tomo el vector de caracteristicas del titulo dado
     titulo = titulo.lower()
+    if not recomendaciones['title'].str.lower().str.contains(titulo).any():
+        return f'La pelicula {titulo.title()} no se encuentra en el dataset por lo que no tenemos recomendaciones.'
     movie_vector = tfidf_vectorizer.transform([titulo])
 
     #Calcular la similitud con el resto de peliculas
