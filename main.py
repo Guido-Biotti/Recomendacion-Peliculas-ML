@@ -120,7 +120,7 @@ recomendaciones = movies[['title', 'genres']].copy()
 tfidf_vectorizer = TfidfVectorizer()
 genres_matrix = tfidf_vectorizer.fit_transform(recomendaciones['genres'])
 
-@app.post('/recomendacion/')
+@app.get('/recomendacion/')
 def recomendacion(titulo):
     #Tomo el vector de caracteristicas del titulo dado
     titulo = titulo.lower()
