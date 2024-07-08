@@ -4,8 +4,6 @@ import pandas as pd
 #Estas funciones me retornan los valores que voy a usar de las columnas anidadas del df
 
 def get_collection_name(row):
-    if pd.isna(row):
-        return None
     try:
         return literal_eval(row)['name']
     except:
