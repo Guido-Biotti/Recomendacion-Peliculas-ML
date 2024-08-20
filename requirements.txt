@@ -48,7 +48,7 @@ missingno==0.5.2
 multimethod==1.11.2
 nest-asyncio==1.6.0
 networkx==3.3
-nltk==3.8.1
+nltk==3.9
 numba==0.60.0
 numpy==1.26.4
 packaging==24.1
